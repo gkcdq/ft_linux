@@ -182,3 +182,7 @@ X.Org XInput driver : 24.4 (libinput)
 À la place de l'architecture historique X11/X.Org, la distribution embarque également la pile graphique moderne **Wayland** :
 * **Cage** : Un compositeur Wayland minimaliste qui fait office de gestionnaire de fenêtres.
 * **Terminology** : Un émulateur de terminal graphique moderne exécuté directement au-dessus du protocole Wayland, prouvant la capacité du Kernel personnalisé à gérer le rendu graphique direct (KMS).
+```bash
+cage terminology
+```
+
