@@ -138,3 +138,42 @@ ping -c 3 8.8.8.8
 ping -c 3 google.com
 ```
 
+
+## 🌐 Partie Bonus : Environnement Graphique & Applications X11
+
+Pour valider les bonus de la distribution, une pile graphique minimale et légère a été implémentée sur le noyau personnalisé `5.15.100-milin`. Elle repose sur le serveur d'affichage historique d'Unix/Linux et un ensemble d'applications de démonstration.
+
+### 🏗️ L'Infrastructure de Base : X.Org Server
+* **X.Org Server (`/usr/bin/Xorg`)** : C'est le serveur d'affichage (X Server) chargé de faire le pont entre le Kernel Linux et les applications graphiques. Il gère l'initialisation de la carte graphique virtuelle (via le pilote *modesetting/kms*), la mémoire vidéo (`glx`) et la capture des événements matériels du clavier et de la souris (`libinput`).
+
+---
+
+### 📦 Description des Applications Installées
+
+Voici la liste et le rôle des quatre composants clés détectés dans le `$PATH` de la distribution (`/usr/bin/`) :
+```
+which openbox xterm xeyes xcalc
+```
+
+| Application | Rôle Technique & Description |
+| :--- | :--- |
+| **`openbox`** | **Gestionnaire de fenêtres (Window Manager) :** C'est un gestionnaire de fenêtres ultra-léger pour X11. Contrairement à un environnement de bureau lourd (comme GNOME ou KDE), Openbox se contente d'afficher les bordures des fenêtres, de permettre leur déplacement/redimensionnement et d'offrir un menu contextuel minimaliste au clic droit. |
+| **`xterm`** | **Émulateur de terminal graphique :** Le terminal standard et historique du système X Window. Il permet d'ouvrir un interpréteur de commandes (Shell Bash) directement sous forme de fenêtre graphique une fois le serveur X lancé. |
+| **`xeyes`** | **Application de test X11 (Démo) :** Une application culte et minimaliste qui affiche une paire d'yeux suivant le curseur de la souris en temps réel. Elle sert de preuve technique directe que le serveur X.Org intercepte correctement les mouvements du pointeur et rafraîchit l'affichage de manière dynamique. |
+| **`xcalc`** | **Calculatrice graphique (Démo) :** Une calculatrice scientifique basique émulée pour X11. Elle démontre la capacité de la distribution à gérer des interfaces utilisateur interactives complexes avec des boutons, des zones d'affichage de texte et des événements de clic. |
+
+---
+
+### 🔍 Preuve d'Intégration Kernel (Logs de Démarrage)
+Le bon fonctionnement et l'association de l'infrastructure X.Org avec le noyau de la distribution sont attestés par les journaux système (`/var/log/Xorg.*.log`) :
+
+```text
+cat /var/log/Xorg.*.log | grep -E "Kernel|Command|X.Org"
+```
+```text
+
+X.Org X Server 1.21.1.7
+Kernel command line: BOOT_IMAGE=/vmlinuz-5.15.100-milin root=UUID=...
+X.Org Video Driver: 25.2 (modesetting)
+X.Org XInput driver : 24.4 (libinput)
+```
