@@ -80,6 +80,49 @@ Prouve qu'un gestionnaire de d'arrière-plan et un chargeur de modules (type ude
 systemctl status udev --no-pager
 lsmod | head -n 10
 ```
+### 🔬 Zoom sur l'infrastructure : Gestion des Démons & Modules (udev & lsmod)
+
+Lors de l'exécution combinée de `systemctl status udev` et `lsmod`, le système expose son architecture de gestion de périphériques et la modularité du Kernel personnalisé `5.15.100-milin`.
+
+---
+
+#### 1. Analyse détaillée du statut de systemd-udevd.service
+
+Le service `systemd-udevd` est le gestionnaire d'événements de périphériques en espace utilisateur (userspace). Il écoute les signaux du Kernel (uevents) à chaque fois qu'un composant matériel est détecté ou modifié.
+
+* **`Loaded: loaded (...; static)`** : Le service est correctement lu par SystemD. L'attribut `static` signifie qu'il ne s'active pas via un lien symbolique classique dans `multi-user.target`, mais qu'il est requis de manière structurelle par le système dès le boot.
+* **`Active: active (running)`** : Le démon tourne parfaitement en tâche de fond.
+* **`TriggeredBy: ... kernel.socket / control.socket`** : Udev utilise des sockets Unix inter-processus (`.socket`). Dès que le Kernel émet un message réseau bas niveau sur le matériel, le socket se réveille et transmet l'information au démon `systemd-udevd`.
+* **`Main PID: 381`** : L'identifiant unique du processus principal en mémoire (Process ID) attribué par le Kernel est le `381`.
+* **`Status: "Processing with 40 children at max"`** : Udev est capable de paralléliser la configuration de ton matériel. Il s'autorise à créer jusqu'à 40 processus enfants simultanés pour charger des pilotes sans bloquer le démarrage de la VM.
+* **`CGroup: /system.slice/...`** : SystemD isole le service dans un groupe de contrôle (Control Group). Cela permet de limiter et de monitorer finement les ressources RAM/CPU consommées spécifiquement par Udev.
+
+---
+
+#### 2. Analyse détaillée du tableau de chargement des modules (`lsmod`)
+
+La commande `lsmod` extrait dynamiquement les informations du système de fichiers virtuel `/proc/modules`. Elle liste les pilotes chargés à chaud à l'instant $T$.
+
+| Nom du Module | Taille (Octets) | Dépendances / Utilisé par | Rôle technique dans la VM VirtualBox |
+| :--- | :--- | :--- | :--- |
+| **`snd_seq_dummy`** | 16384 | 0 | Module de séquençage ALSA (Audio) "factice", souvent chargé par défaut pour les interfaces de test MIDI. |
+| **`snd_hrtimer`** | 16384 | 1 | Timer haute résolution (High-Resolution Timer) du noyau utilisé par le sous-système de son pour la précision du timing audio. |
+| **`snd_seq`** | 94208 | 7 (`snd_seq_dummy`) | Le cœur du séquenceur audio Linux. Il gère le routage des événements audio et MIDI. Il est activement utilisé par 7 autres composants ou sous-modules (dont le dummy). |
+| **`snd_seq_device`** | 16384 | 1 (`snd_seq`) | Fournit une couche d'abstraction pour lier les périphériques matériels audio au séquenceur général. |
+| **`rfkill`** | 32768 | 3 | Sous-système crucial permettant de désactiver les commutateurs radio (Wi-Fi, Bluetooth). Très utilisé par l'interface réseau `wlo1`. |
+| **`qrtr`** | 20480 | 4 | *Qualcomm IPC Router*, un protocole réseau interne du noyau utilisé pour la communication inter-processus bas niveau (IPC). |
+| **`ns`** | 36864 | 1 (`qrtr`) | Module lié aux espaces de noms (Namespaces) réseau ou IPC spécifiques utilisés pour isoler les sockets de communication. |
+| **`binfmt_misc`** | 24576 | 1 | Permet au Kernel de reconnaître et de lancer directement des formats de fichiers binaires non natifs (ex: exécuter des apps Windows via Wine ou des scripts de manière transparente). |
+| **`intel_rapl_msr`** | 20480 | 0 | Pilote de gestion d'énergie (Intel Running Average Power Limit via Model-Specific Registers). Il permet au Kernel de lire et limiter la consommation électrique du processeur émulé par VirtualBox. |
+
+#### 🔄 Synergie Udev / Kernel (Ce que cela prouve)
+La présence conjointe de ces deux sorties prouve le comportement dynamique de la distribution :
+1. Le **Kernel** détecte un composant émulé par VirtualBox (ex: la carte son Intel AC97 ou la carte réseau).
+2. Un *uevent* est envoyé sur le socket d'**Udev**.
+3. **Udev** fait correspondre l'événement avec ses règles internes (`/lib/udev/rules.d/`) et appelle l'utilitaire `modprobe`.
+4. Le module correspondant est chargé en mémoire vive et apparaît instantanément dans la table **`lsmod`**.
+
+
 ## 4. Nom du Binaire de Boot
 
 Prouve que le fichier binaire de GRUB respecte la nomenclature demandée :
