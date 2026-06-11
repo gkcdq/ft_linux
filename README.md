@@ -137,10 +137,4 @@ Prouve la connectivité brute et la résolution de noms (DNS) :
 ping -c 3 8.8.8.8
 ping -c 3 google.com
 ```
-## 6. Le Crash Test ("The Real Test")
 
-Le correcteur demandera d'installer le paquet screen à la volée pour valider le gestionnaire de paquets :
-```Bash
-apt install -y screen
-screen --version
-```
