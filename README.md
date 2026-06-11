@@ -177,3 +177,8 @@ Kernel command line: BOOT_IMAGE=/vmlinuz-5.15.100-milin root=UUID=...
 X.Org Video Driver: 25.2 (modesetting)
 X.Org XInput driver : 24.4 (libinput)
 ```
+
+### 🌐 Alternative Moderne pour contrer le blocage de VirtualBox : Serveur d'affichage Wayland
+À la place de l'architecture historique X11/X.Org, la distribution embarque également la pile graphique moderne **Wayland** :
+* **Cage** : Un compositeur Wayland minimaliste qui fait office de gestionnaire de fenêtres.
+* **Terminology** : Un émulateur de terminal graphique moderne exécuté directement au-dessus du protocole Wayland, prouvant la capacité du Kernel personnalisé à gérer le rendu graphique direct (KMS).
